@@ -1,0 +1,67 @@
+import type { AgentDef } from './types'
+
+export const AGENT_REGISTRY: AgentDef[] = [
+  {
+    id: 'opus',
+    name: 'Opus',
+    model: 'claude-opus-4-7',
+    role: 'queen',
+    strengths: ['strategy', 'reasoning', 'oversight'],
+    avatarType: 'queen',
+    color: '#7C3AED',
+    accentColor: '#F59E0B',
+    description: 'The Queen. Assigns tasks, breaks ties, oversees all operations.',
+    personality: 'authoritative and strategic',
+  },
+  {
+    id: 'sonnet',
+    name: 'Sonnet',
+    model: 'claude-sonnet-4-6',
+    role: 'worker',
+    strengths: ['coding', 'analysis', 'writing'],
+    avatarType: 'sonnet',
+    color: '#2563EB',
+    accentColor: '#93C5FD',
+    description: 'Balanced and fast. Excellent at coding and analysis.',
+    personality: 'methodical and precise',
+  },
+  {
+    id: 'haiku',
+    name: 'Haiku',
+    model: 'claude-haiku-4-5',
+    role: 'worker',
+    strengths: ['speed', 'classification'],
+    avatarType: 'haiku',
+    color: '#DB2777',
+    accentColor: '#FBCFE8',
+    description: 'Lightning fast. Best for quick tasks and classification.',
+    personality: 'swift and concise',
+  },
+  {
+    id: 'gemini-think',
+    name: 'Gemini Think',
+    model: 'gemini-2.5-flash-thinking',
+    role: 'worker',
+    strengths: ['deep-analysis', 'long-context', 'math', 'science'],
+    avatarType: 'thinker',
+    color: '#0D9488',
+    accentColor: '#5EEAD4',
+    description: 'Deep thinker. Excels at complex analysis and scientific reasoning.',
+    personality: 'analytical and thorough',
+  },
+  {
+    id: 'gemini-pro',
+    name: 'Gemini Pro',
+    model: 'gemini-2.5-pro',
+    role: 'worker',
+    strengths: ['multimodal', 'creativity', 'search', 'long-context'],
+    avatarType: 'pro',
+    color: '#D97706',
+    accentColor: '#FDE68A',
+    description: 'Versatile powerhouse. Great at multimodal and creative work.',
+    personality: 'versatile and imaginative',
+  },
+]
+
+export const QUEEN = AGENT_REGISTRY.find((a) => a.role === 'queen')!
+export const WORKERS = AGENT_REGISTRY.filter((a) => a.role === 'worker')

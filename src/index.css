@@ -1,0 +1,188 @@
+/* ── CSS variables ─────────────────────────────────────────────────── */
+:root {
+  --bg:           #0D0A1A;
+  --bg-surface:   rgba(255 255 255 / 0.04);
+  --bg-surface2:  rgba(255 255 255 / 0.08);
+  --border:       rgba(255 255 255 / 0.10);
+  --border-glow:  rgba(255 255 255 / 0.20);
+  --text:         #F1F5F9;
+  --text-muted:   #64748B;
+  --text-dim:     #94A3B8;
+  --radius-sm:    10px;
+  --radius:       16px;
+  --radius-lg:    24px;
+  --shadow:       0 4px 32px rgba(0 0 0 / 0.5);
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255 255 255 / 0.15); border-radius: 4px; }
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-4px) rotate(2deg); }
+}
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50%       { opacity: 0.55; transform: scale(1.08); }
+}
+
+@keyframes working-bob {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50%       { transform: translateY(-3px) rotate(1deg); }
+}
+
+@keyframes thinking-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes on-break-tilt {
+  0%, 100% { transform: rotate(-8deg) translateY(4px); }
+  50%       { transform: rotate(-6deg) translateY(6px); }
+}
+
+@keyframes speaking-bounce {
+  0%, 100% { transform: translateY(0); }
+  25%       { transform: translateY(-4px); }
+  75%       { transform: translateY(-2px); }
+}
+
+@keyframes vote-raise {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%       { transform: translateY(-5px) rotate(-5deg); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.85) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px currentColor; }
+  50%       { box-shadow: 0 0 20px currentColor; }
+}
+
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.4; }
+  30%            { opacity: 1; }
+}
+
+@keyframes hexagon-bg {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Agent status animation classes ───────────────────────────────── */
+.agent-idle     { animation: float      3.5s ease-in-out infinite; }
+.agent-working  { animation: working-bob 0.8s ease-in-out infinite; }
+.agent-thinking { animation: working-bob 1.4s ease-in-out infinite; }
+.agent-speaking { animation: speaking-bounce 0.6s ease-in-out infinite; }
+.agent-voting   { animation: vote-raise 1s ease-in-out infinite; }
+.agent-on-break { animation: on-break-tilt 2.5s ease-in-out infinite; }
+
+/* ── Utility classes ────────────────────────────────────────────────  */
+.glass {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(16px);
+}
+
+.glass-hover:hover {
+  background: var(--bg-surface2);
+  border-color: var(--border-glow);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(255 255 255 / 0.08);
+  border: 1px solid rgba(255 255 255 / 0.12);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn:hover  { opacity: 0.85; }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: #7C3AED;
+  color: white;
+}
+
+.btn-ghost {
+  background: rgba(255 255 255 / 0.07);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.btn-danger {
+  background: rgba(239 68 68 / 0.15);
+  color: #F87171;
+  border: 1px solid rgba(239 68 68 / 0.25);
+}
+
+.btn-success {
+  background: rgba(34 197 94 / 0.15);
+  color: #4ADE80;
+  border: 1px solid rgba(34 197 94 / 0.25);
+}

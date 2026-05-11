@@ -1,5 +1,5 @@
-import { QuorumVotingRoom } from './rooms/QuorumVotingRoom'
+import { AgentFloor } from './rooms/AgentFloor'
 
 export default function App() {
-  return <QuorumVotingRoom />
+  return <AgentFloor />
 }
