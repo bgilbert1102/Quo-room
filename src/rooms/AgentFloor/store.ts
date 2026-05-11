@@ -1,16 +1,20 @@
 import { create } from 'zustand'
 import { AGENT_REGISTRY } from '../../agents/registry'
 import { assignBestWorker, generateStubOpinion, opusAnalyzeTask } from '../../agents/orchestrator'
-import type { AgentRuntimeState, AgentStatus } from '../../agents/types'
+import type { AgentMood, AgentRuntimeState, AgentStatus, SentienceState } from '../../agents/types'
 import type { DiscussionMessage, Task, VoteTopic } from './types'
 
 let _taskSeq = 0
 let _msgSeq = 0
 let _voteSeq = 0
 
-function nextId(prefix: string, seq: () => number): string {
-  return `${prefix}-${seq()}`
-}
+const initialSentience = (): SentienceState => ({
+  energy: 85 + Math.floor(Math.random() * 15),
+  motivation: 70 + Math.floor(Math.random() * 20),
+  mood: 'focused' as AgentMood,
+  lastBreakAt: 0,
+  tickCount: 0,
+})
 
 const initialRuntimes = (): Map<string, AgentRuntimeState> =>
   new Map(
@@ -23,6 +27,7 @@ const initialRuntimes = (): Map<string, AgentRuntimeState> =>
         currentTaskId: null,
         currentMessage: null,
         vote: null,
+        sentience: initialSentience(),
       },
     ]),
   )
@@ -34,20 +39,28 @@ interface FloorState {
   activeTopic: VoteTopic | null
   topicHistory: VoteTopic[]
 
-  // Actions
+  // Agent status / messaging
   setStatus: (agentId: string, status: AgentStatus) => void
+  setMessage: (agentId: string, message: string | null) => void
+  addMessage: (agentId: string, content: string, type: DiscussionMessage['type']) => void
+
+  // Sentience
+  updateSentience: (agentId: string, s: SentienceState) => void
+  autonomousBreak: (agentId: string, message: string, now: number) => void
+  autonomousReturn: (agentId: string, message: string) => void
+
+  // Manual break controls
   sendToBreakRoom: (agentId: string) => void
   recallFromBreakRoom: (agentId: string) => void
-  setMessage: (agentId: string, message: string | null) => void
 
+  // Tasks
   submitTask: (rawInput: string) => void
   completeTask: (taskId: string) => void
 
+  // Voting
   openVote: (description: string) => void
   castVote: (agentId: string, choice: 'approve' | 'reject') => void
   resolveVote: () => void
-
-  addMessage: (agentId: string, content: string, type: DiscussionMessage['type']) => void
   startDiscussion: (topicDescription: string) => void
 
   reset: () => void
@@ -67,6 +80,80 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
       return { runtimes: new Map(s.runtimes).set(agentId, { ...prev, status }) }
     }),
 
+  setMessage: (agentId, message) =>
+    set((s) => {
+      const prev = s.runtimes.get(agentId)
+      if (!prev) return s
+      return {
+        runtimes: new Map(s.runtimes).set(agentId, {
+          ...prev,
+          currentMessage: message,
+          status: message ? ('speaking' as AgentStatus) : prev.status === 'speaking' ? ('idle' as AgentStatus) : prev.status,
+        }),
+      }
+    }),
+
+  addMessage: (agentId, content, type) =>
+    set((s) => ({
+      messages: [
+        ...s.messages,
+        {
+          id: `msg-${++_msgSeq}`,
+          agentId,
+          content,
+          timestamp: Date.now(),
+          type,
+        } satisfies DiscussionMessage,
+      ],
+    })),
+
+  // ── Sentience ──────────────────────────────────────────────────────────────
+  updateSentience: (agentId, sentience) =>
+    set((s) => {
+      const prev = s.runtimes.get(agentId)
+      if (!prev) return s
+      return {
+        runtimes: new Map(s.runtimes).set(agentId, { ...prev, sentience }),
+      }
+    }),
+
+  autonomousBreak: (agentId, message, now) => {
+    const { addMessage } = get()
+    set((s) => {
+      const prev = s.runtimes.get(agentId)
+      if (!prev) return s
+      return {
+        runtimes: new Map(s.runtimes).set(agentId, {
+          ...prev,
+          location: 'break-room',
+          status: 'idle',
+          currentTaskId: null,
+          currentMessage: null,
+          sentience: { ...prev.sentience, lastBreakAt: now },
+        }),
+      }
+    })
+    addMessage(agentId, `☕ Going on break — "${message}"`, 'system')
+  },
+
+  autonomousReturn: (agentId, message) => {
+    const { addMessage } = get()
+    set((s) => {
+      const prev = s.runtimes.get(agentId)
+      if (!prev) return s
+      return {
+        runtimes: new Map(s.runtimes).set(agentId, {
+          ...prev,
+          location: 'floor',
+          status: 'idle',
+          currentMessage: null,
+        }),
+      }
+    })
+    addMessage(agentId, `↩ Back from break — "${message}"`, 'system')
+  },
+
+  // ── Manual break controls ─────────────────────────────────────────────────
   sendToBreakRoom: (agentId) =>
     set((s) => {
       const prev = s.runtimes.get(agentId)
@@ -95,23 +182,11 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
       }
     }),
 
-  setMessage: (agentId, message) =>
-    set((s) => {
-      const prev = s.runtimes.get(agentId)
-      if (!prev) return s
-      return {
-        runtimes: new Map(s.runtimes).set(agentId, {
-          ...prev,
-          currentMessage: message,
-          status: message ? 'speaking' : 'idle',
-        }),
-      }
-    }),
-
+  // ── Tasks ─────────────────────────────────────────────────────────────────
   submitTask: (rawInput) => {
     const { description, requiredStrengths } = opusAnalyzeTask(rawInput)
     const assignedTo = assignBestWorker(requiredStrengths)
-    const taskId = nextId('task', () => ++_taskSeq)
+    const taskId = `task-${++_taskSeq}`
 
     const task: Task = {
       id: taskId,
@@ -133,15 +208,20 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
           })
         : s.runtimes
 
-      const sysMsg: DiscussionMessage = {
-        id: nextId('msg', () => ++_msgSeq),
-        agentId: 'opus',
-        content: `Assigning "${description}" → ${assignedTo} (strengths: ${requiredStrengths.join(', ')})`,
-        timestamp: Date.now(),
-        type: 'system',
+      return {
+        tasks: [...s.tasks, task],
+        runtimes: updated,
+        messages: [
+          ...s.messages,
+          {
+            id: `msg-${++_msgSeq}`,
+            agentId: 'opus',
+            content: `Assigning "${description}" → ${assignedTo} [${requiredStrengths.join(', ')}]`,
+            timestamp: Date.now(),
+            type: 'system',
+          } satisfies DiscussionMessage,
+        ],
       }
-
-      return { tasks: [...s.tasks, task], runtimes: updated, messages: [...s.messages, sysMsg] }
     })
   },
 
@@ -149,11 +229,9 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
     set((s) => {
       const task = s.tasks.find((t) => t.id === taskId)
       if (!task) return s
-
       const updatedTasks = s.tasks.map((t) =>
         t.id === taskId ? { ...t, status: 'done' as const, completedAt: Date.now() } : t,
       )
-
       let updatedRuntimes = s.runtimes
       if (task.assignedTo) {
         const prev = s.runtimes.get(task.assignedTo)
@@ -165,32 +243,15 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
           })
         }
       }
-
       return { tasks: updatedTasks, runtimes: updatedRuntimes }
     }),
 
-  addMessage: (agentId, content, type) =>
-    set((s) => ({
-      messages: [
-        ...s.messages,
-        {
-          id: nextId('msg', () => ++_msgSeq),
-          agentId,
-          content,
-          timestamp: Date.now(),
-          type,
-        } satisfies DiscussionMessage,
-      ],
-    })),
-
+  // ── Voting ────────────────────────────────────────────────────────────────
   startDiscussion: (topicDescription) => {
     const { addMessage, openVote } = get()
-
-    // Each agent (on the floor) contributes a stub opinion
     AGENT_REGISTRY.forEach((agent, idx) => {
       const runtime = get().runtimes.get(agent.id)
       if (runtime?.location !== 'floor') return
-
       setTimeout(() => {
         const opinion = generateStubOpinion(agent.id, topicDescription)
         addMessage(agent.id, opinion, 'opinion')
@@ -201,11 +262,10 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
             runtimes: new Map(s.runtimes).set(agent.id, {
               ...prev,
               status: 'speaking',
-              currentMessage: opinion.slice(0, 60) + (opinion.length > 60 ? '…' : ''),
+              currentMessage: opinion.slice(0, 62) + (opinion.length > 62 ? '…' : ''),
             }),
           }
         })
-        // Clear speech bubble after 3 s
         setTimeout(() => {
           set((s) => {
             const prev = s.runtimes.get(agent.id)
@@ -218,16 +278,14 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
               }),
             }
           })
-        }, 3_000)
+        }, 3_200)
       }, idx * 800)
     })
-
-    // Open the formal vote after everyone has spoken
     setTimeout(() => openVote(topicDescription), AGENT_REGISTRY.length * 800 + 500)
   },
 
   openVote: (description) => {
-    const topicId = nextId('vote', () => ++_voteSeq)
+    const topicId = `vote-${++_voteSeq}`
     const topic: VoteTopic = {
       id: topicId,
       description,
@@ -236,16 +294,12 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
       createdAt: Date.now(),
       resolvedAt: null,
     }
-
-    // Reset all votes and set agents to voting status
     set((s) => {
-      const updatedRuntimes = new Map(s.runtimes)
-      for (const [id, runtime] of updatedRuntimes) {
-        if (runtime.location === 'floor') {
-          updatedRuntimes.set(id, { ...runtime, status: 'voting', vote: null })
-        }
+      const updated = new Map(s.runtimes)
+      for (const [id, r] of updated) {
+        if (r.location === 'floor') updated.set(id, { ...r, status: 'voting', vote: null })
       }
-      return { activeTopic: topic, runtimes: updatedRuntimes }
+      return { activeTopic: topic, runtimes: updated }
     })
   },
 
@@ -253,63 +307,35 @@ export const useFloorStore = create<FloorState>()((set, get) => ({
     set((s) => {
       const prev = s.runtimes.get(agentId)
       if (!prev) return s
-      return {
-        runtimes: new Map(s.runtimes).set(agentId, { ...prev, vote: choice }),
-      }
+      return { runtimes: new Map(s.runtimes).set(agentId, { ...prev, vote: choice }) }
     }),
 
   resolveVote: () => {
     const { activeTopic, runtimes, addMessage } = get()
     if (!activeTopic || activeTopic.status !== 'voting') return
-
-    const floorAgents = [...runtimes.entries()].filter(([, r]) => r.location === 'floor')
-    const approvals = floorAgents.filter(([, r]) => r.vote === 'approve').length
-    const rejections = floorAgents.filter(([, r]) => r.vote === 'reject').length
-    const pending = floorAgents.filter(([, r]) => r.vote === null).length
-
-    // If there's a tie, Opus breaks it — Opus always approves in stub mode
+    const floor = [...runtimes.entries()].filter(([, r]) => r.location === 'floor')
+    const approvals = floor.filter(([, r]) => r.vote === 'approve').length
+    const rejections = floor.filter(([, r]) => r.vote === 'reject').length
+    const pending = floor.filter(([, r]) => r.vote === null).length
     let resolution: 'approved' | 'rejected'
     if (approvals > rejections) {
       resolution = 'approved'
     } else if (rejections > approvals) {
       resolution = 'rejected'
     } else {
-      // Tie — Opus (queen) is tie-breaker
       const opusVote = runtimes.get('opus')?.vote
       resolution = opusVote === 'reject' ? 'rejected' : 'approved'
     }
-
-    const summary = `Vote resolved: ${resolution.toUpperCase()} (${approvals} approve / ${rejections} reject / ${pending} abstain)`
-    addMessage('opus', summary, 'system')
-
-    const resolved: VoteTopic = {
-      ...activeTopic,
-      status: 'resolved',
-      resolution,
-      resolvedAt: Date.now(),
-    }
-
+    addMessage('opus', `Vote resolved: ${resolution.toUpperCase()} (${approvals}✓ / ${rejections}✗ / ${pending} abstain)`, 'system')
+    const resolved: VoteTopic = { ...activeTopic, status: 'resolved', resolution, resolvedAt: Date.now() }
     set((s) => {
-      const updatedRuntimes = new Map(s.runtimes)
-      for (const [id, runtime] of updatedRuntimes) {
-        if (runtime.status === 'voting') {
-          updatedRuntimes.set(id, { ...runtime, status: 'idle', vote: null })
-        }
+      const updated = new Map(s.runtimes)
+      for (const [id, r] of updated) {
+        if (r.status === 'voting') updated.set(id, { ...r, status: 'idle', vote: null })
       }
-      return {
-        activeTopic: null,
-        topicHistory: [...s.topicHistory, resolved],
-        runtimes: updatedRuntimes,
-      }
+      return { activeTopic: null, topicHistory: [...s.topicHistory, resolved], runtimes: updated }
     })
   },
 
-  reset: () =>
-    set({
-      runtimes: initialRuntimes(),
-      tasks: [],
-      messages: [],
-      activeTopic: null,
-      topicHistory: [],
-    }),
+  reset: () => set({ runtimes: initialRuntimes(), tasks: [], messages: [], activeTopic: null, topicHistory: [] }),
 }))
