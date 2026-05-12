@@ -1,17 +1,27 @@
 import { useBusinessStore } from '../../../business/store'
 
 const PLATFORM_EMOJI: Record<string, string> = {
-  etsy: '🛍️',
-  tiktok: '🎵',
-  youtube: '▶️',
-  fiverr: '💼',
+  etsy:          '🛍️',
+  tiktok:        '🎵',
+  'tiktok-shop': '🛒',
+  youtube:       '▶️',
+  fiverr:        '💼',
 }
 
 const PLATFORM_COLOR: Record<string, string> = {
-  etsy: '#F1641E',
-  tiktok: '#EE1D52',
-  youtube: '#FF0000',
-  fiverr: '#1DBF73',
+  etsy:          '#F1641E',
+  tiktok:        '#EE1D52',
+  'tiktok-shop': '#FF6550',
+  youtube:       '#FF0000',
+  fiverr:        '#1DBF73',
+}
+
+const PLATFORM_LABEL: Record<string, string> = {
+  etsy:          'Etsy',
+  tiktok:        'TikTok',
+  'tiktok-shop': 'TikTok Shop',
+  youtube:       'YouTube',
+  fiverr:        'Fiverr',
 }
 
 export function RevenuePanel() {
@@ -60,8 +70,8 @@ export function RevenuePanel() {
               <span style={{ fontSize: 18 }}>{PLATFORM_EMOJI[r.platform]}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontWeight: 700, fontSize: 12, textTransform: 'capitalize' }}>
-                    {r.platform}
+                  <span style={{ fontWeight: 700, fontSize: 12 }}>
+                    {PLATFORM_LABEL[r.platform] ?? r.platform}
                   </span>
                   <span className="badge" style={{
                     fontSize: 9,

@@ -97,6 +97,15 @@ function tickAgent(agentId: string, now: number) {
     return
   }
 
+  // Autonomous posting: if there's approved content, post it
+  if (runtime.status === 'idle' && Math.random() < 0.15) {
+    const posted = businessState.autoPostApproved(agentId)
+    if (posted) {
+      floorState.addMessage(agentId, '📤 Content approved — posting now!', 'system')
+      return
+    }
+  }
+
   // Social: react to latest trend
   const latestTrend = businessState.trends.at(-1)
   if (Math.random() < p.socialRate && runtime.status === 'idle' && latestTrend) {

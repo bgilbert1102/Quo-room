@@ -3,11 +3,12 @@ import { AGENT_REGISTRY } from '../../../agents/registry'
 import type { ContentBrief } from '../../../business/types'
 
 const TYPE_EMOJI: Record<string, string> = {
-  'tiktok-video': '🎵',
-  'youtube-short': '▶️',
-  'youtube-video': '📹',
-  'etsy-listing': '🛍️',
-  'fiverr-gig': '💼',
+  'tiktok-video':       '🎵',
+  'tiktok-shop-listing': '🛒',
+  'youtube-short':      '▶️',
+  'youtube-video':      '📹',
+  'etsy-listing':       '🛍️',
+  'fiverr-gig':         '💼',
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -48,11 +49,7 @@ function ContentCard({ brief }: { brief: ContentBrief }) {
               {brief.status}
             </span>
             {agent && (
-              <span className="badge" style={{
-                fontSize: 9,
-                color: agent.color,
-                borderColor: `${agent.color}30`,
-              }}>
+              <span className="badge" style={{ fontSize: 9, color: agent.color, borderColor: `${agent.color}30` }}>
                 {agent.name}
               </span>
             )}
@@ -63,6 +60,7 @@ function ContentCard({ brief }: { brief: ContentBrief }) {
             )}
           </div>
         </div>
+
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flexShrink: 0 }}>
           {brief.status === 'draft' && (
@@ -73,7 +71,7 @@ function ContentCard({ brief }: { brief: ContentBrief }) {
           )}
           {brief.status === 'approved' && (
             <button className="btn btn-primary" style={{ fontSize: 9, padding: '3px 8px' }} onClick={() => markPosted(brief.id)}>
-              Mark Posted
+              Post now
             </button>
           )}
           {brief.status === 'posted' && brief.postedAt && (
@@ -83,6 +81,27 @@ function ContentCard({ brief }: { brief: ContentBrief }) {
           )}
         </div>
       </div>
+
+      {/* Live metrics strip — appears after posting */}
+      {brief.status === 'posted' && brief.metrics && (brief.metrics.views > 0 || brief.metrics.revenueUsd > 0) && (
+        <div style={{ display: 'flex', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(255 255 255 / 0.06)', flexWrap: 'wrap' }}>
+          {brief.metrics.views > 0 && (
+            <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+              👁 {brief.metrics.views.toLocaleString()}
+            </span>
+          )}
+          {brief.metrics.likes > 0 && (
+            <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+              ❤️ {brief.metrics.likes.toLocaleString()}
+            </span>
+          )}
+          {brief.metrics.revenueUsd > 0 && (
+            <span style={{ fontSize: 9, color: '#4ADE80', fontWeight: 700 }}>
+              💵 ${brief.metrics.revenueUsd.toFixed(2)}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

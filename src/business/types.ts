@@ -1,7 +1,8 @@
-export type Platform = 'etsy' | 'tiktok' | 'youtube' | 'fiverr'
+export type Platform = 'etsy' | 'tiktok' | 'tiktok-shop' | 'youtube' | 'fiverr'
 
 export type ContentType =
   | 'tiktok-video'
+  | 'tiktok-shop-listing'
   | 'youtube-short'
   | 'youtube-video'
   | 'etsy-listing'

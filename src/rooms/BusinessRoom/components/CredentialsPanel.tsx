@@ -27,6 +27,14 @@ const PLATFORM_CONFIG: Array<{
     docsUrl: 'https://business-api.tiktok.com/portal/docs',
   },
   {
+    platform: 'tiktok-shop',
+    label: 'TikTok Shop',
+    emoji: '🛒',
+    color: '#FF6550',
+    hint: 'Access token from TikTok Shop Open Platform (seller account required)',
+    docsUrl: 'https://partner.tiktokshop.com/docv2/page/6507ead7b99d5302be949ba9',
+  },
+  {
     platform: 'youtube',
     label: 'YouTube',
     emoji: '▶️',

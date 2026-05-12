@@ -6,10 +6,11 @@
  * When present → TODO marker shows where the real HTTP call goes.
  *
  * VERIFIED APIs:
- *   Etsy Open API v3   — https://developers.etsy.com/documentation
- *   YouTube Data API v3 — https://developers.google.com/youtube/v3
- *   TikTok for Business — https://business-api.tiktok.com/portal/docs  (requires approval)
- *   Fiverr             — No public REST API for sellers; will use browser automation stub
+ *   Etsy Open API v3      — https://developers.etsy.com/documentation
+ *   YouTube Data API v3   — https://developers.google.com/youtube/v3
+ *   TikTok for Business   — https://business-api.tiktok.com/portal/docs  (requires approval)
+ *   TikTok Shop Open API  — https://partner.tiktokshop.com/docv2/page/6507ead7b99d5302be949ba9 (requires seller approval)
+ *   Fiverr                — No public REST API for sellers; will use browser automation stub
  *
  * All credentials live in .env.local — never in this file or in git.
  */
@@ -26,20 +27,22 @@ export function setCredential(platform: Platform, key: string) {
 
 export function hasCredential(platform: Platform): boolean {
   const envKey: Record<Platform, string> = {
-    etsy:    'VITE_ETSY_API_KEY',
-    tiktok:  'VITE_TIKTOK_ACCESS_TOKEN',
-    youtube: 'VITE_YOUTUBE_API_KEY',
-    fiverr:  'VITE_FIVERR_TOKEN',
+    etsy:          'VITE_ETSY_API_KEY',
+    tiktok:        'VITE_TIKTOK_ACCESS_TOKEN',
+    'tiktok-shop': 'VITE_TIKTOK_SHOP_ACCESS_TOKEN',
+    youtube:       'VITE_YOUTUBE_API_KEY',
+    fiverr:        'VITE_FIVERR_TOKEN',
   }
   return !!(import.meta.env[envKey[platform]] ?? _runtimeCreds[platform])
 }
 
 function getKey(platform: Platform): string | undefined {
   const envKey: Record<Platform, string> = {
-    etsy:    'VITE_ETSY_API_KEY',
-    tiktok:  'VITE_TIKTOK_ACCESS_TOKEN',
-    youtube: 'VITE_YOUTUBE_API_KEY',
-    fiverr:  'VITE_FIVERR_TOKEN',
+    etsy:          'VITE_ETSY_API_KEY',
+    tiktok:        'VITE_TIKTOK_ACCESS_TOKEN',
+    'tiktok-shop': 'VITE_TIKTOK_SHOP_ACCESS_TOKEN',
+    youtube:       'VITE_YOUTUBE_API_KEY',
+    fiverr:        'VITE_FIVERR_TOKEN',
   }
   return (import.meta.env[envKey[platform]] as string | undefined) ?? _runtimeCreds[platform]
 }
@@ -117,6 +120,32 @@ export async function youtubeGetMetrics(videoId: string): Promise<ContentMetrics
   // TODO: GET https://www.googleapis.com/youtube/v3/videos?part=statistics&id={videoId}&key={key}
   void videoId
   throw new Error('YouTube metrics not yet wired')
+}
+
+// ── TikTok Shop ───────────────────────────────────────────────────────────────
+// Docs: https://partner.tiktokshop.com/docv2/page/6507ead7b99d5302be949ba9
+// Requires: TikTok Shop seller account + Open Platform app approval
+export async function tiktokShopCreateListing(brief: ContentBrief): Promise<{ productId: string }> {
+  const key = getKey('tiktok-shop')
+  if (!key) {
+    console.info('[TikTok Shop STUB] Would create listing:', brief.title)
+    return { productId: `stub-tts-${Date.now()}` }
+  }
+  // TODO: real call
+  // POST https://open-api.tiktokglobalshop.com/product/202309/products
+  // Headers: { 'x-tts-access-token': key, 'Content-Type': 'application/json' }
+  // Body: { title, description, category_id, images, skus: [{ price, stock }], package_dimensions }
+  throw new Error('TikTok Shop API not yet wired — provide VITE_TIKTOK_SHOP_ACCESS_TOKEN in .env.local')
+}
+
+export async function tiktokShopGetMetrics(productId: string): Promise<ContentMetrics> {
+  const key = getKey('tiktok-shop')
+  if (!key) {
+    return { views: Math.floor(Math.random() * 3000), likes: Math.floor(Math.random() * 200), comments: Math.floor(Math.random() * 40), shares: Math.floor(Math.random() * 80), revenueUsd: Math.random() * 50 }
+  }
+  // TODO: GET https://open-api.tiktokglobalshop.com/product/202309/products/{product_id}
+  void productId
+  throw new Error('TikTok Shop metrics not yet wired')
 }
 
 // ── Fiverr ────────────────────────────────────────────────────────────────────

@@ -2,10 +2,19 @@ import { useBusinessStore } from '../../../business/store'
 import { AGENT_REGISTRY } from '../../../agents/registry'
 
 const PLATFORM_COLOR: Record<string, string> = {
-  etsy: '#F1641E',
-  tiktok: '#EE1D52',
-  youtube: '#FF0000',
-  fiverr: '#1DBF73',
+  etsy:          '#F1641E',
+  tiktok:        '#EE1D52',
+  'tiktok-shop': '#FF6550',
+  youtube:       '#FF0000',
+  fiverr:        '#1DBF73',
+}
+
+const PLATFORM_LABEL: Record<string, string> = {
+  etsy:          'Etsy',
+  tiktok:        'TikTok',
+  'tiktok-shop': 'TT Shop',
+  youtube:       'YouTube',
+  fiverr:        'Fiverr',
 }
 
 export function TrendFeed() {
@@ -82,7 +91,7 @@ export function TrendFeed() {
                     color: PLATFORM_COLOR[trend.platform],
                     borderColor: `${PLATFORM_COLOR[trend.platform]}40`,
                   }}>
-                    {trend.platform}
+                    {PLATFORM_LABEL[trend.platform] ?? trend.platform}
                   </span>
                 </div>
               </div>

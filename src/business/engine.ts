@@ -26,6 +26,10 @@ const TREND_POOL: Array<{
   { topic: 'Personal finance tracker', keywords: ['budget', 'finance', 'spreadsheet', 'money'], platforms: ['etsy', 'youtube', 'tiktok'], score: 74 },
   { topic: 'Vintage poster collection', keywords: ['vintage', 'retro', 'poster', 'wall decor'], platforms: ['etsy'], score: 62 },
   { topic: 'Short-form video editing tips', keywords: ['video editing', 'CapCut', 'TikTok', 'reels'], platforms: ['tiktok', 'youtube', 'fiverr'], score: 77 },
+  { topic: 'Trending phone cases', keywords: ['phone case', 'custom', 'aesthetic', 'protective'], platforms: ['tiktok-shop'], score: 80 },
+  { topic: 'LED desk lamp bundle', keywords: ['desk lamp', 'LED', 'home office', 'RGB'], platforms: ['tiktok-shop'], score: 73 },
+  { topic: 'AI-generated art prints (physical)', keywords: ['art print', 'AI art', 'wall decor', 'framed'], platforms: ['tiktok-shop', 'etsy'], score: 78 },
+  { topic: 'Portable Bluetooth speaker', keywords: ['speaker', 'Bluetooth', 'outdoor', 'waterproof'], platforms: ['tiktok-shop'], score: 75 },
 ]
 
 let _trendUsed = new Set<number>()
@@ -94,6 +98,12 @@ export function generateContentBrief(
       description: `Fiverr gig offering ${t.topic} services. Three tiers: Basic ($25), Standard ($75), Premium ($150). Deliverables clearly defined per tier. SEO-optimized gig description.`,
       hashtags: t.keywords,
     }),
+    'tiktok-shop-listing': (t) => ({
+      title: `${t.topic} — TikTok Shop Deal 🔥`,
+      hook: `Everyone's buying this ${t.topic} right now — see why`,
+      description: `TikTok Shop product listing for ${t.topic}. Short punchy bullet points, urgency-driven copy, social proof callouts. Optimized for TikTok Shop affiliate visibility and LIVE selling sessions.`,
+      hashtags: ['#TikTokShop', '#TikTokMadeMeBuyIt', ...t.keywords.map((k) => `#${k.replace(/\s+/g, '')}`)],
+    }),
   }
 
   const template = templates[contentType](trend)
@@ -117,10 +127,11 @@ export function generateContentBrief(
 // Map trend → best content type(s) for that platform
 export function suggestContentTypes(platform: Platform): ContentType[] {
   const map: Record<Platform, ContentType[]> = {
-    tiktok:  ['tiktok-video'],
-    youtube: ['youtube-short', 'youtube-video'],
-    etsy:    ['etsy-listing'],
-    fiverr:  ['fiverr-gig'],
+    tiktok:       ['tiktok-video'],
+    'tiktok-shop': ['tiktok-shop-listing'],
+    youtube:      ['youtube-short', 'youtube-video'],
+    etsy:         ['etsy-listing'],
+    fiverr:       ['fiverr-gig'],
   }
   return map[platform]
 }
