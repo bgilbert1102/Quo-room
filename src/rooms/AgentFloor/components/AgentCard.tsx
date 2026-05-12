@@ -3,22 +3,22 @@ import { useFloorStore } from '../store'
 import { AGENT_REGISTRY } from '../../../agents/registry'
 import type { AgentDef } from '../../../agents/types'
 
-const STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle',
-  working: 'Working…',
-  thinking: 'Thinking…',
-  speaking: 'Speaking',
-  voting: 'Voting',
-  'on-break': 'On Break',
+const STATUS_ABBR: Record<string, string> = {
+  idle: 'IDLE',
+  working: 'EXEC',
+  thinking: 'PROC',
+  speaking: 'SPKNG',
+  voting: 'VOTE',
+  'on-break': 'BRK',
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  idle: '#64748B',
-  working: '#F59E0B',
-  thinking: '#818CF8',
-  speaking: '#34D399',
-  voting: '#FB923C',
-  'on-break': '#94A3B8',
+  idle: '#344A5E',
+  working: '#FF6A00',
+  thinking: '#00C8FF',
+  speaking: '#00FF87',
+  voting: '#FFAA00',
+  'on-break': '#1E2D3A',
 }
 
 interface Props {
@@ -43,180 +43,229 @@ export function AgentCard({ agent, isQueen = false }: Props) {
 
   const isOnBreak = runtime.location === 'break-room'
   const isVoting = runtime.status === 'voting' && activeTopic?.status === 'voting'
+  const statusColor = STATUS_COLOR[runtime.status] ?? '#344A5E'
+  const statusAbbr = STATUS_ABBR[runtime.status] ?? runtime.status.toUpperCase()
 
   const cardSize = isQueen ? 116 : 90
 
   return (
     <div
-      className="glass glass-hover"
+      className="agent-card-terminal"
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 8,
-        padding: isQueen ? '20px 24px' : '14px 16px',
+        gap: 6,
+        padding: 0,
         position: 'relative',
         minWidth: isQueen ? 200 : 148,
-        border: `1px solid ${agent.color}30`,
-        boxShadow: `0 0 ${isQueen ? 24 : 12}px ${agent.color}22`,
-        transition: 'box-shadow 0.2s',
+        background: 'rgba(0,0,0,0.4)',
+        border: `1px solid ${agent.color}20`,
+        borderRadius: 2,
+        boxShadow: `0 0 ${isQueen ? 20 : 10}px ${agent.color}18`,
+        transition: 'border-color 0.15s, box-shadow 0.15s',
         animation: 'pop-in 0.3s ease-out',
+        cursor: 'default',
+        overflow: 'hidden',
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLDivElement
+        el.style.borderColor = `${agent.color}50`
+        el.style.boxShadow = `0 0 ${isQueen ? 28 : 16}px ${agent.color}30`
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLDivElement
+        el.style.borderColor = `${agent.color}20`
+        el.style.boxShadow = `0 0 ${isQueen ? 20 : 10}px ${agent.color}18`
       }}
     >
-      {/* Status dot */}
+      {/* Top-mounted status bar */}
       <div style={{
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        width: 8,
-        height: 8,
-        borderRadius: '50%',
-        background: STATUS_COLOR[runtime.status] ?? '#64748B',
-        boxShadow: `0 0 6px ${STATUS_COLOR[runtime.status] ?? '#64748B'}`,
-      }} />
+        width: '100%',
+        height: isQueen ? 22 : 18,
+        background: statusColor,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 8px',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+      }}>
+        <span style={{
+          fontFamily: 'monospace',
+          fontSize: isQueen ? 8 : 7,
+          fontWeight: 700,
+          color: 'rgba(0,0,0,0.85)',
+          letterSpacing: '0.12em',
+        }}>
+          {statusAbbr}
+        </span>
+        {/* Agent role tag */}
+        <span style={{
+          fontFamily: 'monospace',
+          fontSize: 6,
+          fontWeight: 700,
+          color: 'rgba(0,0,0,0.6)',
+          letterSpacing: '0.1em',
+        }}>
+          {isQueen ? 'QUEEN' : agent.avatarType.toUpperCase()}
+        </span>
+      </div>
 
-      {/* Break indicator */}
-      {isOnBreak && (
-        <div style={{
-          position: 'absolute',
-          top: 8,
-          left: 8,
-          fontSize: 14,
-        }}>☕</div>
-      )}
-
-      {/* Body */}
-      <AgentBody
-        avatarType={agent.avatarType}
-        color={agent.color}
-        accentColor={agent.accentColor}
-        status={runtime.status}
-        size={cardSize}
-      />
-
-      {/* Speech bubble */}
+      {/* Current message strip — replaces speech bubble */}
       {runtime.currentMessage && (
         <div style={{
-          position: 'absolute',
-          top: -8,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(15 10 26 / 0.95)',
-          border: `1px solid ${agent.color}60`,
-          borderRadius: 10,
-          padding: '5px 10px',
-          fontSize: 11,
+          width: '100%',
+          background: `${agent.color}12`,
+          borderBottom: `1px solid ${agent.color}25`,
+          padding: '3px 8px',
+          boxSizing: 'border-box',
+          fontFamily: 'monospace',
+          fontSize: 9,
           color: agent.accentColor,
           whiteSpace: 'nowrap',
-          maxWidth: 200,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          zIndex: 10,
-          animation: 'pop-in 0.2s ease-out',
-          boxShadow: `0 2px 12px ${agent.color}40`,
+          letterSpacing: '0.04em',
         }}>
-          {runtime.currentMessage}
-          <div style={{
-            position: 'absolute',
-            bottom: -6,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 0,
-            height: 0,
-            borderLeft: '6px solid transparent',
-            borderRight: '6px solid transparent',
-            borderTop: `6px solid ${agent.color}60`,
-          }} />
+          &gt; {runtime.currentMessage}
         </div>
       )}
 
+      {/* Body area */}
+      <div style={{ padding: `${isQueen ? 12 : 8}px ${isQueen ? 20 : 14}px 0` }}>
+        <AgentBody
+          avatarType={agent.avatarType}
+          color={agent.color}
+          accentColor={agent.accentColor}
+          status={runtime.status}
+          size={cardSize}
+        />
+      </div>
+
       {/* Name + model */}
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ textAlign: 'center', padding: '0 12px' }}>
         <div style={{
+          fontFamily: 'monospace',
           fontWeight: 700,
-          fontSize: isQueen ? 17 : 14,
+          fontSize: isQueen ? 13 : 11,
           color: agent.color,
-          letterSpacing: '0.01em',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
         }}>
-          {isQueen ? '👑 ' : ''}{agent.name}
+          {agent.name}
         </div>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>
+        <div style={{
+          fontFamily: 'monospace',
+          fontSize: 8,
+          color: 'var(--text-muted)',
+          marginTop: 2,
+          letterSpacing: '0.04em',
+          opacity: 0.7,
+        }}>
           {agent.model}
         </div>
       </div>
 
       {/* Status badge */}
-      <div className="badge" style={{ color: STATUS_COLOR[runtime.status], fontSize: 10 }}>
-        {STATUS_LABEL[runtime.status] ?? runtime.status}
+      <div className="badge" style={{
+        color: statusColor,
+        fontSize: 9,
+        fontFamily: 'monospace',
+        letterSpacing: '0.1em',
+        borderColor: `${statusColor}40`,
+        background: `${statusColor}15`,
+      }}>
+        {statusAbbr}
       </div>
 
       {/* Current task */}
       {currentTask && (
         <div style={{
-          fontSize: 10,
+          fontFamily: 'monospace',
+          fontSize: 9,
           color: 'var(--text-dim)',
           textAlign: 'center',
           maxWidth: 130,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
+          letterSpacing: '0.03em',
+          opacity: 0.75,
+          padding: '0 8px',
         }}>
-          📋 {currentTask.description}
+          {currentTask.description}
         </div>
       )}
 
       {/* Strength tags */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'center', maxWidth: 160 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'center', maxWidth: 160, padding: '0 8px' }}>
         {agent.strengths.slice(0, isQueen ? 4 : 3).map((s) => (
           <span key={s} className="badge" style={{
-            fontSize: 9,
-            padding: '1px 6px',
-            background: `${agent.color}18`,
-            borderColor: `${agent.color}30`,
+            fontSize: 8,
+            padding: '1px 5px',
+            background: `${agent.color}15`,
+            borderColor: `${agent.color}28`,
             color: agent.accentColor,
+            fontFamily: 'monospace',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            borderRadius: 1,
           }}>
             {s}
           </span>
         ))}
       </div>
 
-      {/* Vote buttons (only during active vote) */}
+      {/* Vote buttons — only during active vote */}
       {isVoting && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+        <div style={{ display: 'flex', gap: 6, padding: '4px 0' }}>
           <button
             className="btn btn-success"
-            style={{ padding: '4px 10px', fontSize: 11 }}
+            style={{ padding: '4px 10px', fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.06em', borderRadius: 1 }}
             onClick={() => castVote(agent.id, 'approve')}
             disabled={runtime.vote !== null}
           >
-            {runtime.vote === 'approve' ? '✓ Yes' : 'Approve'}
+            {runtime.vote === 'approve' ? 'YES [v]' : 'APPROVE'}
           </button>
           <button
             className="btn btn-danger"
-            style={{ padding: '4px 10px', fontSize: 11 }}
+            style={{ padding: '4px 10px', fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.06em', borderRadius: 1 }}
             onClick={() => castVote(agent.id, 'reject')}
             disabled={runtime.vote !== null}
           >
-            {runtime.vote === 'reject' ? '✓ No' : 'Reject'}
+            {runtime.vote === 'reject' ? 'NO [v]' : 'REJECT'}
           </button>
         </div>
       )}
 
-      {/* Queen: resolve vote button */}
+      {/* Queen: RESOLVE button during vote */}
       {isQueen && activeTopic?.status === 'voting' && (
-        <button className="btn btn-primary" style={{ marginTop: 4, fontSize: 11 }} onClick={resolveVote}>
-          Resolve Vote
+        <button
+          className="btn btn-primary"
+          style={{ marginBottom: 8, fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.08em', borderRadius: 1 }}
+          onClick={resolveVote}
+        >
+          RESOLVE
         </button>
       )}
 
-      {/* Break room controls (non-queen workers only) */}
+      {/* Break controls — non-queen workers only */}
       {!isQueen && (
         <button
           className="btn btn-ghost"
-          style={{ marginTop: 2, fontSize: 10, padding: '3px 8px' }}
+          style={{
+            marginBottom: 8,
+            fontSize: 9,
+            padding: '3px 10px',
+            fontFamily: 'monospace',
+            letterSpacing: '0.08em',
+            borderRadius: 1,
+            textTransform: 'uppercase',
+          }}
           onClick={() => isOnBreak ? recall(agent.id) : sendToBreak(agent.id)}
         >
-          {isOnBreak ? '↩ Recall' : '☕ Break'}
+          {isOnBreak ? 'RECALL' : 'BREAK'}
         </button>
       )}
     </div>

@@ -40,10 +40,11 @@ export interface SentienceProfile {
   returnThreshold: number     // return when energy exceeds this
   curiosityRate: number       // 0-1: probability of curiosity action per tick
   socialRate: number          // 0-1: probability of spontaneous chat per tick
-  breakMessages: readonly string[]
-  returnMessages: readonly string[]
-  idleThoughts: readonly string[]  // things the agent says when bored/curious
-  trendReactions: readonly string[]  // reactions when a new trend appears
+  // Message arrays are optional — messageGen.ts handles generation dynamically
+  breakMessages?: readonly string[]
+  returnMessages?: readonly string[]
+  idleThoughts?: readonly string[]
+  trendReactions?: readonly string[]
 }
 
 // Runtime sentience — changes each tick

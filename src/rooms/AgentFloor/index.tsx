@@ -45,80 +45,51 @@ export function AgentFloor({ onOpenBusiness }: Props) {
           overflow: 'hidden',
         }}>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexShrink: 0 }}>
-            <span style={{ fontSize: 22 }}>🐝</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexShrink: 0, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: '0.02em' }}>
-                Quo<span style={{ color: '#7C3AED' }}>room</span>
+              <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: '0.16em', color: 'var(--neon)' }}>
+                QUOROOM
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                AI Hive · {WORKERS.length + 1} agents · sentient mode ON
+              <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+                AUTONOMOUS HIVE // {WORKERS.length + 1} NODES // SENTIENCE ACTIVE
               </div>
             </div>
-            {/* Business room nav button */}
             <button
               className="btn btn-ghost"
               onClick={onOpenBusiness}
-              style={{
-                fontSize: 12,
-                position: 'relative',
-                borderColor: pendingApprovals > 0 ? 'rgba(245 158 11 / 0.5)' : undefined,
-              }}
+              style={{ fontSize: 9, letterSpacing: '0.1em',
+                borderColor: pendingApprovals > 0 ? 'var(--warn)' : undefined,
+                color: pendingApprovals > 0 ? 'var(--warn)' : undefined }}
             >
-              💼 Business
-              {pendingApprovals > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: -6,
-                  right: -6,
-                  background: '#F59E0B',
-                  color: '#0D0A1A',
-                  borderRadius: 999,
-                  width: 16,
-                  height: 16,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {pendingApprovals}
-                </span>
-              )}
+              BUSINESS{pendingApprovals > 0 ? ` [${pendingApprovals}]` : ''}
             </button>
-            {/* Business stats chips */}
-            {(trendCount > 0 || contentCount > 0) && (
-              <div style={{ display: 'flex', gap: 5 }}>
-                {trendCount > 0 && (
-                  <span className="badge" style={{ fontSize: 10, color: '#5EEAD4' }}>
-                    📡 {trendCount} trends
-                  </span>
-                )}
-                {contentCount > 0 && (
-                  <span className="badge" style={{ fontSize: 10, color: '#FBBF24' }}>
-                    📦 {contentCount} briefs
-                  </span>
-                )}
-              </div>
+            {trendCount > 0 && (
+              <span className="badge" style={{ color: 'var(--cold)' }}>
+                {trendCount} TRENDS
+              </span>
+            )}
+            {contentCount > 0 && (
+              <span className="badge" style={{ color: 'var(--warn)' }}>
+                {contentCount} BRIEFS
+              </span>
             )}
           </div>
 
-          {/* Queen section */}
+          {/* Commander section */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: 14,
-            padding: '12px 16px',
-            marginBottom: 14,
-            borderRadius: 20,
-            background: 'linear-gradient(135deg, rgba(124 58 237/0.12), rgba(245 158 11/0.05))',
-            border: '1px solid rgba(124 58 237/0.25)',
+            padding: '10px 14px',
+            marginBottom: 10,
+            background: 'rgba(124 58 237 / 0.04)',
+            border: '1px solid rgba(124 58 237 / 0.20)',
             flexShrink: 0,
           }}>
             <AgentCard agent={QUEEN} isQueen />
             <div style={{ flex: 1 }}>
               <EnergyBar agentId={QUEEN.id} color={QUEEN.color} />
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 5, letterSpacing: '0.05em', lineHeight: 1.6 }}>
                 {QUEEN.businessRole}
               </div>
             </div>
@@ -126,8 +97,8 @@ export function AgentFloor({ onOpenBusiness }: Props) {
 
           {/* Workers */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, marginBottom: 8 }}>
-              WORKERS — FLOOR
+            <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 8 }}>
+              WORKER NODES // FLOOR
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, paddingBottom: 12 }}>
               {floorWorkers.length === 0 ? (
@@ -168,34 +139,29 @@ export function AgentFloor({ onOpenBusiness }: Props) {
   )
 }
 
-// Thin energy bar below each card
 function EnergyBar({ agentId, color }: { agentId: string; color: string }) {
   const energy = useFloorStore((s) => s.runtimes.get(agentId)?.sentience.energy ?? 100)
-  const mood = useFloorStore((s) => s.runtimes.get(agentId)?.sentience.mood ?? 'content')
+  const mood   = useFloorStore((s) => s.runtimes.get(agentId)?.sentience.mood ?? 'content')
 
-  const MOOD_EMOJI: Record<string, string> = {
-    excited: '🤩', focused: '🎯', content: '😊', tired: '😴', stressed: '😰', bored: '😑',
+  const MOOD_CODE: Record<string, string> = {
+    excited: 'EXC', focused: 'FOC', content: 'NOM',
+    tired: 'LOW', stressed: 'STR', bored: 'IDLE',
   }
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-      <span style={{ fontSize: 12 }}>{MOOD_EMOJI[mood] ?? '😊'}</span>
-      <div style={{
-        flex: 1,
-        height: 3,
-        borderRadius: 2,
-        background: 'rgba(255 255 255 / 0.08)',
-        overflow: 'hidden',
-      }}>
+      <span style={{ fontSize: 8, color: 'var(--text-muted)', minWidth: 24, letterSpacing: '0.08em' }}>
+        {MOOD_CODE[mood] ?? 'NOM'}
+      </span>
+      <div style={{ flex: 1, height: 2, background: 'rgba(255 255 255 / 0.06)' }}>
         <div style={{
           width: `${energy}%`,
           height: '100%',
-          borderRadius: 2,
-          background: energy > 60 ? color : energy > 30 ? '#F59E0B' : '#EF4444',
+          background: energy > 60 ? color : energy > 30 ? 'var(--warn)' : 'var(--danger)',
           transition: 'width 1.5s ease, background 1s ease',
         }} />
       </div>
-      <span style={{ fontSize: 9, color: 'var(--text-muted)', minWidth: 22 }}>
+      <span style={{ fontSize: 8, color: 'var(--text-muted)', minWidth: 24, textAlign: 'right' }}>
         {Math.round(energy)}%
       </span>
     </div>
