@@ -68,6 +68,37 @@ Before depending on any of these, mark each as `VERIFIED` (with doc URL), `NOT F
 |---|---|---|
 | `VITE_WS_URL` | `ws://localhost:3000/ws` | WebSocket server URL |
 | `VITE_WS_RATE_LIMIT_PER_MIN` | `20` | Max outgoing msgs per 60 s window |
+| `HERALD_CHANNEL` | `fake` | Notification channel: `fake` (no-op) or `telegram` (real sends) |
+| `TELEGRAM_BOT_TOKEN` | — | Required when `HERALD_CHANNEL=telegram` |
+| `TELEGRAM_CHAT_ID` | — | Required when `HERALD_CHANNEL=telegram` |
+
+## Herald — Telegram Setup
+
+Herald routes agent events to Telegram when `HERALD_CHANNEL=telegram`. The module fails loud at startup if the required env vars are absent — it will not silently drop notifications.
+
+**One-time bot setup:**
+
+1. Message `@BotFather` in Telegram → send `/newbot` → follow prompts → save the token.
+2. Send any message to your new bot (required before the API works).
+3. Fetch your chat ID: open `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser and copy `result[0].message.chat.id`.
+4. Add both to `.env.local` (never commit this file):
+   ```
+   HERALD_CHANNEL=telegram
+   TELEGRAM_BOT_TOKEN=<your-bot-token>
+   TELEGRAM_CHAT_ID=<your-chat-id>
+   ```
+5. Restart the dev server. First dispatched event confirms the channel is live.
+
+**CI / test environment:** Leave `HERALD_CHANNEL` unset (defaults to `fake`). No env vars needed. No real messages sent.
+
+**Rate limits (hard-coded in `dispatch.ts`):**
+
+| Tier | Limit | Behaviour |
+|---|---|---|
+| CRITICAL | 1 per minute | Immediate send; extras dropped + audit-logged |
+| IMPORTANT | 5 per hour | Batched (flush at 3 events or 10-min window) |
+| DAILY | 1 per 24 hours | Immediate send when quota available |
+| SILENT | never sent | Audit log only |
 
 ## Starting Work
 
